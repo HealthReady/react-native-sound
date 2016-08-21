@@ -29,20 +29,37 @@ function Sound(filename, basePath, onError) {
   this._volume = 1;
   this._pan = 0;
   this._numberOfLoops = 0;
-  RNSound.prepare(this._filename, this._key, (error, props) => {
-    if (props) {
-      if (typeof props.duration === 'number') {
-        this._duration = props.duration;
+  if (asset) {
+    RNSound.prepareWithUrl(this._filename, this._key, (error, props) => {
+      if (props) {
+        if (typeof props.duration === 'number') {
+          this._duration = props.duration;
+        }
+        if (typeof props.numberOfChannels === 'number') {
+          this._numberOfChannels = props.numberOfChannels;
+        }
       }
-      if (typeof props.numberOfChannels === 'number') {
-        this._numberOfChannels = props.numberOfChannels;
+      if (error === null) {
+        this._loaded = true;
       }
-    }
-    if (error === null) {
-      this._loaded = true;
-    }
-    onError && onError(error);
-  });
+      onError && onError(error);
+    });
+  } else {
+    RNSound.prepare(this._filename, this._key, (error, props) => {
+      if (props) {
+        if (typeof props.duration === 'number') {
+          this._duration = props.duration;
+        }
+        if (typeof props.numberOfChannels === 'number') {
+          this._numberOfChannels = props.numberOfChannels;
+        }
+      }
+      if (error === null) {
+        this._loaded = true;
+      }
+      onError && onError(error);
+    });
+  }
 }
 
 Sound.prototype.isLoaded = function() {
