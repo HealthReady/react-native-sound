@@ -92,7 +92,6 @@ RCT_EXPORT_METHOD(enableInSilenceMode:(BOOL)enabled) {
 RCT_EXPORT_METHOD(prepare:(NSString*)fileName withKey:(nonnull NSNumber*)key
                   withCallback:(RCTResponseSenderBlock)callback) {
   NSError* error;
-  NSData* data = [NSData dataWithContentsOfURL: fileName];
   AVAudioPlayer* player = [[AVAudioPlayer alloc]
                            initWithContentsOfURL:[NSURL fileURLWithPath:[fileName stringByRemovingPercentEncoding]]
                            error:&error];
