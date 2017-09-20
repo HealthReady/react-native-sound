@@ -180,6 +180,22 @@ RCT_EXPORT_METHOD(prepare:(NSString*)fileName
   }
 }
 
+RCT_EXPORT_METHOD(prepareWithUrl:(NSURL *)url withKey:(nonnull NSNumber*)key
+                  withCallback:(RCTResponseSenderBlock)callback) {
+  NSError* error;
+  NSData* data = [NSData dataWithContentsOfURL: url];
+  AVAudioPlayer* player = [[AVAudioPlayer alloc] initWithData:data error:&error];
+  if (player) {
+    player.delegate = self;
+    [player prepareToPlay];
+    [[self playerPool] setObject:player forKey:key];
+    callback(@[[NSNull null], @{@"duration": @(player.duration),
+                                @"numberOfChannels": @(player.numberOfChannels)}]);
+  } else {
+    callback(@[RCTJSErrorFromNSError(error)]);
+  }
+}
+
 RCT_EXPORT_METHOD(play:(nonnull NSNumber*)key withCallback:(RCTResponseSenderBlock)callback) {
   AVAudioPlayer* player = [self playerForKey:key];
   if (player) {
