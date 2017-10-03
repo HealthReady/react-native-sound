@@ -142,42 +142,52 @@ public class RNSoundModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void play(final Integer key, final Callback callback) {
-    MediaPlayer player = this.playerPool.get(key);
-    if (player == null) {
-      callback.invoke(false);
-      return;
-    }
-    if (player.isPlaying()) {
-      return;
-    }
-    player.setOnCompletionListener(new OnCompletionListener() {
-      boolean callbackWasCalled = false;
+    try {
+      AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+      int ringerMode = audioManager.getRingerMode();
+      boolean isSilentMode = ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE;
+      MediaPlayer player = this.playerPool.get(key);
+      if (player == null || isSilentMode) {
+        callback.invoke(false);
+        return;
+      }
+      if (player.isPlaying()) {
+        return;
+      }
+      player.setOnCompletionListener(new OnCompletionListener() {
+        boolean callbackWasCalled = false;
 
-      @Override
-      public synchronized void onCompletion(MediaPlayer mp) {
-        if (!mp.isLooping()) {
-          if (callbackWasCalled) return;
-          callbackWasCalled = true;
-          try {
-            callback.invoke(true);
-          } catch (Exception e) {
+        @Override
+        public synchronized void onCompletion(MediaPlayer mp) {
+          if (!mp.isLooping()) {
+            if (callbackWasCalled) return;
+            callbackWasCalled = true;
+            try {
+              callback.invoke(true);
+            } catch (Exception e) {
               //Catches the exception: java.lang.RuntimeException·Illegal callback invocation from native module
+            }
           }
         }
-      }
-    });
-    player.setOnErrorListener(new OnErrorListener() {
-      boolean callbackWasCalled = false;
+      });
+      player.setOnErrorListener(new OnErrorListener() {
+        boolean callbackWasCalled = false;
 
-      @Override
-      public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
-        if (callbackWasCalled) return true;
-        callbackWasCalled = true;
-        callback.invoke(false);
-        return true;
-      }
-    });
-    player.start();
+        @Override
+        public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
+          if (callbackWasCalled) return true;
+          callbackWasCalled = true;
+          callback.invoke(false);
+          return true;
+        }
+      });
+      player.start();
+    } catch (Exception error) {
+      WritableMap e = Arguments.createMap();
+      e.putInt("code", -1);
+      e.putString("message", error.getMessage());
+      callback.invoke(e);
+    }
   }
 
   @ReactMethod
